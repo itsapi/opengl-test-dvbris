@@ -3,5 +3,5 @@ varying vec3 vColour;
 void
 main()
 {
-  glColor = vColour;
+  glColor = vec4(vColour, 1.0f);
 }

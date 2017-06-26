@@ -1,8 +1,62 @@
 #include "shaders.h"
 
 
+void
+print_gl_error(GLenum error_code)
+{
+  switch (error_code)
+  {
+    case (GL_INVALID_ENUM):
+    {
+      printf("OpenGL error: GL_INVALID_ENUM\n");
+    } break;
+    case (GL_INVALID_VALUE):
+    {
+      printf("OpenGL error: GL_INVALID_VALUE\n");
+    } break;
+    case (GL_INVALID_OPERATION):
+    {
+      printf("OpenGL error: GL_INVALID_OPERATION\n");
+    } break;
+    case (GL_STACK_OVERFLOW):
+    {
+      printf("OpenGL error: GL_STACK_OVERFLOW\n");
+    } break;
+    case (GL_STACK_UNDERFLOW):
+    {
+      printf("OpenGL error: GL_STACK_UNDERFLOW\n");
+    } break;
+    case (GL_OUT_OF_MEMORY):
+    {
+      printf("OpenGL error: GL_OUT_OF_MEMORY\n");
+    } break;
+    case (GL_INVALID_FRAMEBUFFER_OPERATION):
+    {
+      printf("OpenGL error: GL_INVALID_FRAMEBUFFER_OPERATION\n");
+    } break;
+    case (GL_TABLE_TOO_LARGE):
+    {
+      printf("OpenGL error: GL_TABLE_TOO_LARGE\n");
+    }
+  }
+}
+
+
+void
+print_gl_errors()
+{
+  GLenum error = glGetError();
+  while (error != GL_NO_ERROR)
+  {
+    print_gl_error(error);
+
+    error = glGetError();
+  }
+}
+
+
 bool
-compile_shader(char shader_source[], int size, GLenum shader_type, GLuint *shader)
+compile_shader(const char shader_source[], int size, GLenum shader_type, GLuint *shader)
 {
   bool success = true;
 
@@ -125,11 +179,11 @@ bind_shader_attributes(GLuint vbo, GLuint shader_program)
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
   glBindAttribLocation(shader_program, attribute_pos, "pos");
-  glVertexAttribPointer(attribute_pos, sizeof(vec2), GL_FLOAT, GL_FALSE, sizeof(ShaderAttributes), (const void *)offsetof(ShaderAttributes, pos));
+  glVertexAttribPointer(attribute_pos, sizeof(vec2)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(ShaderAttributes), (const void *)offsetof(ShaderAttributes, pos));
   glEnableVertexAttribArray(attribute_pos);
 
   glBindAttribLocation(shader_program, attribute_colour, "colour");
-  glVertexAttribPointer(attribute_colour, sizeof(vec3), GL_FLOAT, GL_FALSE, sizeof(ShaderAttributes), (const void *)offsetof(ShaderAttributes, colour));
+  glVertexAttribPointer(attribute_colour, sizeof(vec3)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(ShaderAttributes), (const void *)offsetof(ShaderAttributes, colour));
   glEnableVertexAttribArray(attribute_colour);
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
