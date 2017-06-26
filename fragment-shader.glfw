@@ -1,0 +1,7 @@
+varying vec3 vColour;
+
+void
+main()
+{
+  glColor = vColour;
+}
