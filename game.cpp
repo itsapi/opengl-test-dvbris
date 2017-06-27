@@ -11,14 +11,14 @@ game(SDL_Window *sdl_window, bool first_frame)
 
   if (first_frame)
   {
-    int n_shaders = 1;
+    int n_shaders = 2;
     const char *filenames[n_shaders];
     GLenum shader_types[n_shaders];
 
     filenames[0] = "vertex-shader.glvs";
     shader_types[0] = GL_VERTEX_SHADER;
 
-    filenames[1] = "fragment-shader.glvs";
+    filenames[1] = "fragment-shader.glfs";
     shader_types[1] = GL_FRAGMENT_SHADER;
 
     GLuint shader_program = 0;
