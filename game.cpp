@@ -1,11 +1,13 @@
 #include "game.h"
 
 
-void
+bool
 game(SDL_Window *sdl_window, bool first_frame)
 {
   static int n_points;
   static GLuint vbo;
+
+  bool keep_running = true;
 
   if (first_frame)
   {
@@ -20,12 +22,23 @@ game(SDL_Window *sdl_window, bool first_frame)
     shader_types[1] = GL_FRAGMENT_SHADER;
 
     GLuint shader_program = 0;
-    create_shader_program(filenames, shader_types, n_shaders, &shader_program);
+    bool compile_success = create_shader_program(filenames, shader_types, n_shaders, &shader_program);
+    if (!compile_success)
+    {
+      keep_running = false;
+      return keep_running;
+    }
 
     vbo = create_buffer();
     bind_shader_attributes(vbo, shader_program);
 
-    link_shader_program(shader_program);
+    bool link_success = link_shader_program(shader_program);
+    if (!link_success)
+    {
+      keep_running = false;
+      return keep_running;
+    }
+
     glUseProgram(shader_program);
 
     ShaderAttributes points[] = {
@@ -49,4 +62,6 @@ game(SDL_Window *sdl_window, bool first_frame)
   SDL_GL_SwapWindow(sdl_window);
 
   print_gl_errors();
+
+  return keep_running;
 }

@@ -10,11 +10,7 @@
 #ifdef __APPLE__
 
 #include <SDL2/SDL.h>
-// #include <SDL2/SDL_opengl.h>
 #include <OpenGL/gl.h>
-// #include <OpenGL/glext.h>
-// #include <OpenGL/glu.h>
-// #include <GLUT/glut.h>
 
 #else
 
@@ -75,7 +71,7 @@ game_loop(SDL_Window *sdl_window)
             }
         }
 
-        game(sdl_window, first_frame);
+        running &= game(sdl_window, first_frame);
 
         usleep(100000);
         first_frame = false;

@@ -1,6 +1,6 @@
 CC         = clang++
 CFLAGS     = -Werror -g -ferror-limit=1 -O0
-LIBS       = -lpthread -lfreetype -I/usr/include/freetype2
+LIBS       = -lpthread
 SOURCES    = main.cpp
 EXECUTABLE = opengl-test-dvbris
 
