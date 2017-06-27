@@ -171,15 +171,15 @@ create_buffer()
 
 
 void
-bind_shader_attributes(GLuint vbo, GLuint shader_program)
+bind_vbo_attributes(GLuint vbo, GLuint shader_program)
 {
   GLuint attribute_pos = 0;
-  GLuint attribute_colour = 2;
+  GLuint attribute_colour = 3;
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
   glBindAttribLocation(shader_program, attribute_pos, "pos");
-  glVertexAttribPointer(attribute_pos, sizeof(vec2)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(ShaderAttributes), (const void *)offsetof(ShaderAttributes, pos));
+  glVertexAttribPointer(attribute_pos, sizeof(vec3)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(ShaderAttributes), (const void *)offsetof(ShaderAttributes, pos));
   glEnableVertexAttribArray(attribute_pos);
 
   glBindAttribLocation(shader_program, attribute_colour, "colour");
@@ -191,9 +191,55 @@ bind_shader_attributes(GLuint vbo, GLuint shader_program)
 
 
 void
+load_coords_into_ibo(GLuint ibo, GLushort faces[], GLushort n_faces)
+{
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, n_faces * sizeof(GLushort), faces, GL_STATIC_DRAW);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+
+void
 load_coords_into_vbo(GLuint vbo, ShaderAttributes coords[], int n_coords)
 {
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, n_coords * sizeof(ShaderAttributes), coords, GL_STREAM_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+
+bool
+get_uniform_locations(Uniforms *uniforms, GLuint shader_program)
+{
+  bool success = true;
+
+  uniforms->uniform_float_scale = glGetUniformLocation(shader_program, "scale");
+  if (uniforms->uniform_float_scale == -1)
+  {
+    printf("Failed to find uniform float scale");
+    success &= false;
+  }
+
+  uniforms->uniform_float_theta_x = glGetUniformLocation(shader_program, "theta_x");
+  if (uniforms->uniform_float_theta_x == -1)
+  {
+    printf("Failed to find uniform float theta_x");
+    success &= false;
+  }
+
+  uniforms->uniform_float_theta_y = glGetUniformLocation(shader_program, "theta_y");
+  if (uniforms->uniform_float_theta_y == -1)
+  {
+    printf("Failed to find uniform float theta_y");
+    success &= false;
+  }
+
+  uniforms->uniform_float_theta_z = glGetUniformLocation(shader_program, "theta_z");
+  if (uniforms->uniform_float_theta_z == -1)
+  {
+    printf("Failed to find uniform float theta_z");
+    success &= false;
+  }
+
+  return success;
 }

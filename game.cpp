@@ -4,8 +4,9 @@
 bool
 game(SDL_Window *sdl_window, bool first_frame)
 {
-  static int n_points;
-  static GLuint vbo;
+  static int n_points, n_faces;
+  static GLuint vbo, ibo;
+  static Uniforms uniforms;
 
   bool keep_running = true;
 
@@ -30,7 +31,7 @@ game(SDL_Window *sdl_window, bool first_frame)
     }
 
     vbo = create_buffer();
-    bind_shader_attributes(vbo, shader_program);
+    bind_vbo_attributes(vbo, shader_program);
 
     bool link_success = link_shader_program(shader_program);
     if (!link_success)
@@ -41,23 +42,66 @@ game(SDL_Window *sdl_window, bool first_frame)
 
     glUseProgram(shader_program);
 
+    bool uniforms_success = get_uniform_locations(&uniforms, shader_program);
+    if (!uniforms_success)
+    {
+      keep_running = false;
+      return keep_running;
+    }
+
     ShaderAttributes points[] = {
-      {.pos = {-0.45f,  0.45f}, .colour = {1.0f, 0.0f, 0.0f}},
-      {.pos = { 0.45f,  0.45f}, .colour = {0.0f, 1.0f, 0.0f}},
-      {.pos = { 0.45f, -0.45f}, .colour = {0.0f, 0.0f, 1.0f}},
-      {.pos = {-0.45f, -0.45f}, .colour = {1.0f, 1.0f, 0.0f}}
+      // front
+      {.pos = {-1, -1,  1}, .colour = {1, 0, 0}},
+      {.pos = { 1, -1,  1}, .colour = {0, 1, 0}},
+      {.pos = { 1,  1,  1}, .colour = {0, 0, 1}},
+      {.pos = {-1,  1,  1}, .colour = {1, 1, 1}},
+      // back
+      {.pos = {-1, -1, -1}, .colour = {1, 0, 0}},
+      {.pos = { 1, -1, -1}, .colour = {0, 1, 0}},
+      {.pos = { 1,  1, -1}, .colour = {0, 0, 1}},
+      {.pos = {-1,  1, -1}, .colour = {1, 1, 1}},
     };
 
     n_points = sizeof(points) / sizeof(ShaderAttributes);
     load_coords_into_vbo(vbo, points, n_points);
+
+    GLushort faces[] = {
+      // front
+      0, 1, 2,
+      2, 3, 0,
+      // top
+      1, 5, 6,
+      6, 2, 1,
+      // back
+      7, 6, 5,
+      5, 4, 7,
+      // bottom
+      4, 0, 3,
+      3, 7, 4,
+      // left
+      4, 5, 1,
+      1, 0, 4,
+      // right
+      3, 2, 6,
+      6, 7, 3,
+    };
+
+    ibo = create_buffer();
+    n_faces = sizeof(faces) / sizeof(GLushort);
+    load_coords_into_ibo(ibo, faces, n_faces);
   }
 
   glClearColor(0, 0, 0, 1);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glDrawArrays(GL_QUADS, 0, n_points);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glUniform1f(uniforms.uniform_float_scale, 0.5);
+  glUniform1f(uniforms.uniform_float_theta_x, 1.0);
+  glUniform1f(uniforms.uniform_float_theta_y, 45 * 0.001 * SDL_GetTicks() * M_PI / 180);
+  glUniform1f(uniforms.uniform_float_theta_z, M_PI * 0.00);
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+  glDrawElements(GL_TRIANGLES, n_faces, GL_UNSIGNED_SHORT, 0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
   SDL_GL_SwapWindow(sdl_window);
 
