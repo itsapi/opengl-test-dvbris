@@ -31,8 +31,10 @@
 #include "game.cpp"
 
 
-const unsigned int WINDOW_WIDTH = 1600;
+const unsigned int WINDOW_WIDTH = 900;
 const unsigned int WINDOW_HEIGHT = 900;
+
+const float FPS = 60;
 
 
 void
@@ -73,7 +75,7 @@ game_loop(SDL_Window *sdl_window)
 
         running &= game(sdl_window, first_frame);
 
-        usleep(100000);
+        usleep(1000000.0/FPS);
         first_frame = false;
     }
 }
