@@ -52,8 +52,8 @@ game(SDL_Window *sdl_window, bool first_frame)
     load_coords_into_vbo(vbo, points, n_points);
   }
 
-  glClearColor(1, 0, 0, 1);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClearColor(0, 0, 0, 1);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glDrawArrays(GL_QUADS, 0, n_points);

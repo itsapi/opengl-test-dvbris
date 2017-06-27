@@ -121,6 +121,7 @@ main(int argc, char *argv[])
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+    glEnable(GL_DEPTH_TEST);
 
     game_loop(sdl_window);
 
