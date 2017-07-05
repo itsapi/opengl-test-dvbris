@@ -1,13 +1,16 @@
+#version 330 core
+
 uniform float scale;
 uniform float theta_x;
 uniform float theta_y;
 uniform float theta_z;
 
 
-attribute vec3 pos;
-attribute vec3 colour;
+layout (location = 0) in vec3 pos;
+layout (location = 3) in vec3 colour;
+layout (location = 6) in vec3 offset;
 
-varying vec3 vColour;
+out vec3 vert_colour;
 
 
 void main()
@@ -30,8 +33,7 @@ void main()
                                 0, sin(theta_z),  cos(theta_z));
 
   vec3 position = pos * transformation_matrix;
+  gl_Position = vec4(position + offset, 1.0);
 
-  gl_Position = vec4(position, 1.0);
-
-  vColour = colour;
+  vert_colour = colour;
 }

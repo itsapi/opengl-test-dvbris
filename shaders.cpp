@@ -125,33 +125,27 @@ create_shader_program(const char *filenames[], GLenum types[], int size, GLuint 
     glAttachShader(*shader_program, shader);
   }
 
-  return success;
-}
-
-
-bool
-link_shader_program(GLuint shader_program)
-{
-  bool success = true;
-
-  glLinkProgram(shader_program);
-
-  GLint is_linked = 0;
-  glGetProgramiv(shader_program, GL_LINK_STATUS, &is_linked);
-  if (is_linked == GL_FALSE)
+  if (success)
   {
-    GLint log_size = 0;
-    glGetProgramiv(shader_program, GL_INFO_LOG_LENGTH, &log_size);
+    glLinkProgram(*shader_program);
 
-    GLchar *log = (GLchar *)malloc(sizeof(GLchar) * log_size);
-    glGetProgramInfoLog(shader_program, log_size, NULL, log);
+    GLint is_linked = 0;
+    glGetProgramiv(*shader_program, GL_LINK_STATUS, &is_linked);
+    if (is_linked == GL_FALSE)
+    {
+      GLint log_size = 0;
+      glGetProgramiv(*shader_program, GL_INFO_LOG_LENGTH, &log_size);
 
-    printf("Shader link error:\n%s\n", log);
-    free(log);
+      GLchar *log = (GLchar *)malloc(sizeof(GLchar) * log_size);
+      glGetProgramInfoLog(*shader_program, log_size, NULL, log);
 
-    glDeleteProgram(shader_program);
+      printf("Shader link error:\n%s\n", log);
+      free(log);
 
-    success = false;
+      glDeleteProgram(*shader_program);
+
+      success = false;
+    }
   }
 
   return success;
@@ -171,40 +165,44 @@ create_buffer()
 
 
 void
-bind_vbo_attributes(GLuint vbo, GLuint shader_program)
+setup_vao(GLuint *vao, GLuint *vertex_vbo, GLuint *vertex_ibo, GLuint *instance_vbo,
+          ShaderAttributes *shader_attributes, int n_shader_attributes,
+          GLushort *indices, int n_indices,
+          vec3 *instances, int n_instances)
 {
+  glGenVertexArrays(1, vao);
+  glBindVertexArray(*vao);
+
+  // Vertex VBO
+
+  glGenBuffers(1, vertex_vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, *vertex_vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(ShaderAttributes) * n_shader_attributes, shader_attributes, GL_STATIC_DRAW);
+
   GLuint attribute_pos = 0;
-  GLuint attribute_colour = 3;
-
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-  glBindAttribLocation(shader_program, attribute_pos, "pos");
   glVertexAttribPointer(attribute_pos, sizeof(vec3)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(ShaderAttributes), (const void *)offsetof(ShaderAttributes, pos));
   glEnableVertexAttribArray(attribute_pos);
 
-  glBindAttribLocation(shader_program, attribute_colour, "colour");
+  GLuint attribute_colour = 3;
   glVertexAttribPointer(attribute_colour, sizeof(vec3)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(ShaderAttributes), (const void *)offsetof(ShaderAttributes, colour));
   glEnableVertexAttribArray(attribute_colour);
 
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
+  // Vertex IBO
 
+  glGenBuffers(1, vertex_ibo);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *vertex_ibo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * n_indices, indices, GL_STATIC_DRAW);
 
-void
-load_coords_into_ibo(GLuint ibo, GLushort faces[], GLushort n_faces)
-{
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, n_faces * sizeof(GLushort), faces, GL_STATIC_DRAW);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
+  // Instance VBO
 
+  glGenBuffers(1, instance_vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, *instance_vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * n_instances, instances, GL_STATIC_DRAW);
 
-void
-load_coords_into_vbo(GLuint vbo, ShaderAttributes coords[], int n_coords)
-{
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, n_coords * sizeof(ShaderAttributes), coords, GL_STREAM_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  GLuint attribute_offset = 6;
+  glEnableVertexAttribArray(attribute_offset);
+  glVertexAttribPointer(attribute_offset, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
+  glVertexAttribDivisor(attribute_offset, 1);
 }
 
 
