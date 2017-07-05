@@ -93,6 +93,8 @@ main(int argc, char *argv[])
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
   SDL_WindowFlags flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_INPUT_FOCUS);
 
@@ -110,7 +112,11 @@ main(int argc, char *argv[])
     exit(1);
   }
 
+  SDL_GL_SetSwapInterval(1);
+
 #ifndef __APPLE__
+  glewExperimental = GL_TRUE;
+
   GLenum glew_status = glewInit();
   if (glew_status != GLEW_OK)
   {
@@ -122,8 +128,9 @@ main(int argc, char *argv[])
   const unsigned char *opengl_version = glGetString(GL_VERSION);
   printf("OpenGL Version: %s\n", opengl_version);
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
+  print_gl_errors();
+  printf("OpenGL init finished.\n");
+
   glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
   glEnable(GL_DEPTH_TEST);
 
