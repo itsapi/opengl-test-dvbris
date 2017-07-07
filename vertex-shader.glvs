@@ -1,39 +1,17 @@
 #version 330 core
 
-uniform float scale;
-uniform float theta_x;
-uniform float theta_y;
-uniform float theta_z;
-
+uniform mat4 world_transform;
 
 layout (location = 0) in vec3 pos;
 layout (location = 3) in vec3 colour;
-layout (location = 6) in vec3 offset;
+layout (location = 6) in mat4 instance_transform;
 
 out vec3 vert_colour;
 
 
 void main()
 {
-  mat3
-  transformation_matrix  = mat3(scale,     0,     0,
-                                    0, scale,     0,
-                                    0,     0, scale);
-
-  transformation_matrix *= mat3(cos(theta_x), -sin(theta_x), 0,
-                                sin(theta_x),  cos(theta_x), 0,
-                                           0,             0, 1);
-
-  transformation_matrix *= mat3( cos(theta_y), 0, sin(theta_y),
-                                            0, 1,            0,
-                                -sin(theta_y), 0, cos(theta_y));
-
-  transformation_matrix *= mat3(1,            0,             0,
-                                0, cos(theta_z), -sin(theta_z),
-                                0, sin(theta_z),  cos(theta_z));
-
-  vec3 position = pos * transformation_matrix;
-  gl_Position = vec4(position + offset, 1.0);
-
+  vec4 position = world_transform * transpose(instance_transform) * vec4(pos, 1);
+  gl_Position = vec4(position.xyz, 1);
   vert_colour = colour;
 }

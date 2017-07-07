@@ -53,8 +53,21 @@ game(SDL_Window *sdl_window, bool first_frame)
     };
     n_indices = sizeof(indices) / sizeof(GLushort);
 
-    vec3 instances[2] = {{-0.5, 0, 0}, {0.5, 0, 0}};
-    n_instances = sizeof(instances) / sizeof(vec3);
+    mat4 instances[] = {
+      {0.1, 0, 0, 0,
+       0, 1,   0, 1,
+       0, 0, 0.1, 0,
+       0, 0,   0, 1},
+      {1, 0,   0, 0,
+       0, 0.1, 0, 0,
+       0, 0,   1, 0,
+       0, 0,   0, 1},
+      {0.2, 0, 0, 0,
+       0, 0.2, 0, 0,
+       0, 0, 0.2, 0,
+       0, 0,   0, 1}
+    };
+    n_instances = sizeof(instances) / sizeof(mat4);
 
     setup_vao(&vao,
               &vertex_vbo, &vertex_ibo, &instance_vbo,
@@ -62,13 +75,9 @@ game(SDL_Window *sdl_window, bool first_frame)
               indices, n_indices,
               instances, n_instances);
 
-    int n_shaders = 2;
-    const char *filenames[n_shaders];
-    GLenum shader_types[n_shaders];
-    filenames[0] = "vertex-shader.glvs";
-    shader_types[0] = GL_VERTEX_SHADER;
-    filenames[1] = "fragment-shader.glfs";
-    shader_types[1] = GL_FRAGMENT_SHADER;
+    const int n_shaders = 2;
+    const char *filenames[n_shaders] = {"vertex-shader.glvs", "fragment-shader.glfs"};
+    GLenum shader_types[n_shaders] = {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER};
 
     GLuint shader_program = 0;
     bool compile_success = create_shader_program(filenames, shader_types, n_shaders, &shader_program);
@@ -94,10 +103,45 @@ game(SDL_Window *sdl_window, bool first_frame)
   glClearColor(0, 0, 0, 1);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glUniform1f(uniforms.uniform_float_scale, 0.3);
-  glUniform1f(uniforms.uniform_float_theta_x, 1.0);
-  glUniform1f(uniforms.uniform_float_theta_y, 45 * 0.001 * SDL_GetTicks() * M_PI / 180);
-  glUniform1f(uniforms.uniform_float_theta_z, M_PI * 0.00);
+  float seconds = 0.001 * SDL_GetTicks();
+
+  mat4 world_transform = {1, 0, 0, 0,
+                          0, 1, 0, 0,
+                          0, 0, 1, 0,
+                          0, 0, 0, 1};
+
+  vec3 offset = {0, 0.5 * sin(180 * seconds * M_PI / 180.0), 0};
+  multiply(&world_transform, (mat4){1, 0, 0, offset.x,
+                                    0, 1, 0, offset.y,
+                                    0, 0, 1, offset.z,
+                                    0, 0, 0,        1});
+
+  float scale = 0.3;
+  multiply(&world_transform, (mat4){scale,     0,     0, 0,
+                                        0, scale,     0, 0,
+                                        0,     0, scale, 0,
+                                        0,     0,     0, 1});
+
+  float theta_z = 1.0;
+  float theta_y = 45 * seconds * M_PI / 180;
+  float theta_x = M_PI * 0.00;
+
+  multiply(&world_transform, (mat4){cos(theta_x), -sin(theta_x), 0, 0,
+                                    sin(theta_x),  cos(theta_x), 0, 0,
+                                               0,             0, 1, 0,
+                                               0,             0, 0, 1});
+
+  multiply(&world_transform, (mat4){ cos(theta_y), 0, sin(theta_y), 0,
+                                                0, 1,            0, 0,
+                                    -sin(theta_y), 0, cos(theta_y), 0,
+                                                0, 0,            0, 1});
+
+  multiply(&world_transform, (mat4){1,            0,             0, 0,
+                                    0, cos(theta_z), -sin(theta_z), 0,
+                                    0, sin(theta_z),  cos(theta_z), 0,
+                                    0,            0,             0, 1});
+
+  glUniformMatrix4fv(uniforms.uniform_mat4_world_transform, 1, true, world_transform.es);
 
   glDrawElementsInstanced(GL_TRIANGLES, n_indices, GL_UNSIGNED_SHORT, 0, n_instances);
 

@@ -168,7 +168,7 @@ void
 setup_vao(GLuint *vao, GLuint *vertex_vbo, GLuint *vertex_ibo, GLuint *instance_vbo,
           ShaderAttributes *shader_attributes, int n_shader_attributes,
           GLushort *indices, int n_indices,
-          vec3 *instances, int n_instances)
+          mat4 *instances, int n_instances)
 {
   glGenVertexArrays(1, vao);
   glBindVertexArray(*vao);
@@ -197,12 +197,23 @@ setup_vao(GLuint *vao, GLuint *vertex_vbo, GLuint *vertex_ibo, GLuint *instance_
 
   glGenBuffers(1, instance_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, *instance_vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * n_instances, instances, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(mat4) * n_instances, instances, GL_STATIC_DRAW);
 
-  GLuint attribute_offset = 6;
-  glEnableVertexAttribArray(attribute_offset);
-  glVertexAttribPointer(attribute_offset, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
-  glVertexAttribDivisor(attribute_offset, 1);
+  // Max attribute size is 4, so have to do mat4 as 4 vec4s
+  GLuint attribute_instance_transform[4] = {6, 7, 8, 9};
+  glEnableVertexAttribArray(attribute_instance_transform[0]);
+  glVertexAttribPointer(attribute_instance_transform[0], sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(mat4), (void *)(sizeof(vec4)*0));
+  glEnableVertexAttribArray(attribute_instance_transform[1]);
+  glVertexAttribPointer(attribute_instance_transform[1], sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(mat4), (void *)(sizeof(vec4)*1));
+  glEnableVertexAttribArray(attribute_instance_transform[2]);
+  glVertexAttribPointer(attribute_instance_transform[2], sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(mat4), (void *)(sizeof(vec4)*2));
+  glEnableVertexAttribArray(attribute_instance_transform[3]);
+  glVertexAttribPointer(attribute_instance_transform[3], sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(mat4), (void *)(sizeof(vec4)*3));
+
+  glVertexAttribDivisor(attribute_instance_transform[0], 1);
+  glVertexAttribDivisor(attribute_instance_transform[1], 1);
+  glVertexAttribDivisor(attribute_instance_transform[2], 1);
+  glVertexAttribDivisor(attribute_instance_transform[3], 1);
 }
 
 
@@ -211,31 +222,10 @@ get_uniform_locations(Uniforms *uniforms, GLuint shader_program)
 {
   bool success = true;
 
-  uniforms->uniform_float_scale = glGetUniformLocation(shader_program, "scale");
-  if (uniforms->uniform_float_scale == -1)
+  uniforms->uniform_mat4_world_transform = glGetUniformLocation(shader_program, "world_transform");
+  if (uniforms->uniform_mat4_world_transform == -1)
   {
-    printf("Failed to find uniform float scale");
-    success &= false;
-  }
-
-  uniforms->uniform_float_theta_x = glGetUniformLocation(shader_program, "theta_x");
-  if (uniforms->uniform_float_theta_x == -1)
-  {
-    printf("Failed to find uniform float theta_x");
-    success &= false;
-  }
-
-  uniforms->uniform_float_theta_y = glGetUniformLocation(shader_program, "theta_y");
-  if (uniforms->uniform_float_theta_y == -1)
-  {
-    printf("Failed to find uniform float theta_y");
-    success &= false;
-  }
-
-  uniforms->uniform_float_theta_z = glGetUniformLocation(shader_program, "theta_z");
-  if (uniforms->uniform_float_theta_z == -1)
-  {
-    printf("Failed to find uniform float theta_z");
+    printf("Failed to find uniform mat4 world_transform");
     success &= false;
   }
 

@@ -7,8 +7,5 @@ struct ShaderAttributes
 
 struct Uniforms
 {
-  GLuint uniform_float_scale;
-  GLuint uniform_float_theta_x;
-  GLuint uniform_float_theta_y;
-  GLuint uniform_float_theta_z;
+  GLuint uniform_mat4_world_transform;
 };
