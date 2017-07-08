@@ -4,14 +4,29 @@
 bool
 game(SDL_Window *sdl_window, bool first_frame)
 {
-  static int n_points,
-             n_indices,
-             n_instances;
   static GLuint vao,
                 vertex_vbo,
                 vertex_ibo,
                 instance_vbo;
   static Uniforms uniforms;
+
+  static int n_points,
+             n_indices,
+             n_instances;
+  static mat4 instances[] = {
+    {0.1, 0, 0, 0,
+     0, 1,   0, 0,
+     0, 0, 0.1, 0,
+     0, 0,   0, 1},
+    {1, 0,   0, 0,
+     0, 0.1, 0, 0,
+     0, 0,   1, 0,
+     0, 0,   0, 1},
+    {0.2, 0, 0, 0,
+     0, 0.2, 0, 0,
+     0, 0, 0.2, 0,
+     0, 0,   0, 1}
+  };
 
   bool keep_running = true;
 
@@ -53,27 +68,12 @@ game(SDL_Window *sdl_window, bool first_frame)
     };
     n_indices = sizeof(indices) / sizeof(GLushort);
 
-    mat4 instances[] = {
-      {0.1, 0, 0, 0,
-       0, 1,   0, 1,
-       0, 0, 0.1, 0,
-       0, 0,   0, 1},
-      {1, 0,   0, 0,
-       0, 0.1, 0, 0,
-       0, 0,   1, 0,
-       0, 0,   0, 1},
-      {0.2, 0, 0, 0,
-       0, 0.2, 0, 0,
-       0, 0, 0.2, 0,
-       0, 0,   0, 1}
-    };
     n_instances = sizeof(instances) / sizeof(mat4);
 
-    setup_vao(&vao,
-              &vertex_vbo, &vertex_ibo, &instance_vbo,
-              points, n_points,
-              indices, n_indices,
-              instances, n_instances);
+    setup_vao(&vao);
+    setup_vertex_vbo_ibo(&vertex_vbo, points, n_points,
+                         &vertex_ibo, indices, n_indices);
+    setup_instances_vbo(&instance_vbo, instances, n_instances);
 
     const int n_shaders = 2;
     const char *filenames[n_shaders] = {"vertex-shader.glvs", "fragment-shader.glfs"};
@@ -105,6 +105,16 @@ game(SDL_Window *sdl_window, bool first_frame)
 
   float seconds = 0.001 * SDL_GetTicks();
 
+  // Update instances
+
+  mat4 new_instance_0 = multiply(instances[0], (mat4){1, 0, 0, 0,
+                                                      0, 1, 0, sin(80 * seconds * M_PI / 180.0),
+                                                      0, 0, 1, 0,
+                                                      0, 0, 0, 1});
+  update_instance(instance_vbo, 0, &new_instance_0);
+
+  // Update uniforms
+
   mat4 world_transform = {1, 0, 0, 0,
                           0, 1, 0, 0,
                           0, 0, 1, 0,
@@ -124,7 +134,7 @@ game(SDL_Window *sdl_window, bool first_frame)
 
   float theta_z = 1.0;
   float theta_y = 45 * seconds * M_PI / 180;
-  float theta_x = M_PI * 0.00;
+  float theta_x = 30 * seconds * M_PI / 180;
 
   multiply(&world_transform, (mat4){cos(theta_x), -sin(theta_x), 0, 0,
                                     sin(theta_x),  cos(theta_x), 0, 0,

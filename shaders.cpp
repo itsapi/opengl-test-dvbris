@@ -165,14 +165,17 @@ create_buffer()
 
 
 void
-setup_vao(GLuint *vao, GLuint *vertex_vbo, GLuint *vertex_ibo, GLuint *instance_vbo,
-          ShaderAttributes *shader_attributes, int n_shader_attributes,
-          GLushort *indices, int n_indices,
-          mat4 *instances, int n_instances)
+setup_vao(GLuint *vao)
 {
   glGenVertexArrays(1, vao);
   glBindVertexArray(*vao);
+}
 
+
+void
+setup_vertex_vbo_ibo(GLuint *vertex_vbo, ShaderAttributes *shader_attributes, int n_shader_attributes,
+                     GLuint *vertex_ibo, GLushort *indices, int n_indices)
+{
   // Vertex VBO
 
   glGenBuffers(1, vertex_vbo);
@@ -192,9 +195,12 @@ setup_vao(GLuint *vao, GLuint *vertex_vbo, GLuint *vertex_ibo, GLuint *instance_
   glGenBuffers(1, vertex_ibo);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *vertex_ibo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * n_indices, indices, GL_STATIC_DRAW);
+}
 
-  // Instance VBO
 
+void
+setup_instances_vbo(GLuint *instance_vbo, mat4 *instances, int n_instances)
+{
   glGenBuffers(1, instance_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, *instance_vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(mat4) * n_instances, instances, GL_STATIC_DRAW);
@@ -214,6 +220,14 @@ setup_vao(GLuint *vao, GLuint *vertex_vbo, GLuint *vertex_ibo, GLuint *instance_
   glVertexAttribDivisor(attribute_instance_transform[1], 1);
   glVertexAttribDivisor(attribute_instance_transform[2], 1);
   glVertexAttribDivisor(attribute_instance_transform[3], 1);
+}
+
+
+void
+update_instance(GLuint instance_vbo, int instance_n, mat4 *instance)
+{
+  glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
+  glBufferSubData(GL_ARRAY_BUFFER, sizeof(mat4)*instance_n, sizeof(mat4), instance);
 }
 
 
