@@ -1,3 +1,6 @@
+#ifndef VECTORS_H_DEF
+#define VECTORS_H_DEF
+
 struct vec2
 {
   union
@@ -120,3 +123,5 @@ struct mat4
     };
   };
 };
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef FILE_H_DEF
+#define FILE_H_DEF
+
 struct File
 {
   int fd;
@@ -5,3 +8,5 @@ struct File
   const char *read_only;
   int size;
 };
+
+#endif
