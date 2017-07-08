@@ -1,17 +1,18 @@
 #version 330 core
 
 uniform mat4 world_transform;
+uniform vec3 block_type_colours[3];
 
-layout (location = 0) in vec3 pos;
-layout (location = 3) in vec3 colour;
-layout (location = 6) in mat4 instance_transform;
+layout (location = 0) in vec3 cube_vertex;
+layout (location = 3) in uint block_instance_type;
+layout (location = 4) in mat4 block_instance_transform;
 
 out vec3 vert_colour;
 
 
 void main()
 {
-  vec4 position = world_transform * transpose(instance_transform) * vec4(pos, 1);
+  vec4 position = world_transform * transpose(block_instance_transform) * vec4(cube_vertex, 1);
   gl_Position = vec4(position.xyz, 1);
-  vert_colour = colour;
+  vert_colour = block_type_colours[block_instance_type];
 }

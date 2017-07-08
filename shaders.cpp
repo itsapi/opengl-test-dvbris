@@ -1,4 +1,5 @@
 #include "shaders.h"
+#include "game.h"
 
 
 void
@@ -173,22 +174,18 @@ setup_vao(GLuint *vao)
 
 
 void
-setup_vertex_vbo_ibo(GLuint *vertex_vbo, ShaderAttributes *shader_attributes, int n_shader_attributes,
+setup_vertex_vbo_ibo(GLuint *vertex_vbo, Vertex *vertices, int n_vertices,
                      GLuint *vertex_ibo, GLushort *indices, int n_indices)
 {
   // Vertex VBO
 
   glGenBuffers(1, vertex_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, *vertex_vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(ShaderAttributes) * n_shader_attributes, shader_attributes, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * n_vertices, vertices, GL_STATIC_DRAW);
 
   GLuint attribute_pos = 0;
-  glVertexAttribPointer(attribute_pos, sizeof(vec3)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(ShaderAttributes), (const void *)offsetof(ShaderAttributes, pos));
+  glVertexAttribPointer(attribute_pos, sizeof(vec3)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, pos));
   glEnableVertexAttribArray(attribute_pos);
-
-  GLuint attribute_colour = 3;
-  glVertexAttribPointer(attribute_colour, sizeof(vec3)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(ShaderAttributes), (const void *)offsetof(ShaderAttributes, colour));
-  glEnableVertexAttribArray(attribute_colour);
 
   // Vertex IBO
 
@@ -199,35 +196,43 @@ setup_vertex_vbo_ibo(GLuint *vertex_vbo, ShaderAttributes *shader_attributes, in
 
 
 void
-setup_instances_vbo(GLuint *instance_vbo, mat4 *instances, int n_instances)
+setup_block_instances_vbo(GLuint *block_instance_vbo, Block *block_instances, int n_block_instances)
 {
-  glGenBuffers(1, instance_vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, *instance_vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(mat4) * n_instances, instances, GL_STATIC_DRAW);
+  glGenBuffers(1, block_instance_vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, *block_instance_vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(Block) * n_block_instances, block_instances, GL_STATIC_DRAW);
+
+  GLuint attribute_block_instance_type = 3;
+  glEnableVertexAttribArray(attribute_block_instance_type);
+  glVertexAttribPointer(attribute_block_instance_type, sizeof(vec3)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(Block), (void *)offsetof(Block, type));
+  glVertexAttribDivisor(attribute_block_instance_type, 1);
 
   // Max attribute size is 4, so have to do mat4 as 4 vec4s
-  GLuint attribute_instance_transform[4] = {6, 7, 8, 9};
-  glEnableVertexAttribArray(attribute_instance_transform[0]);
-  glVertexAttribPointer(attribute_instance_transform[0], sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(mat4), (void *)(sizeof(vec4)*0));
-  glEnableVertexAttribArray(attribute_instance_transform[1]);
-  glVertexAttribPointer(attribute_instance_transform[1], sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(mat4), (void *)(sizeof(vec4)*1));
-  glEnableVertexAttribArray(attribute_instance_transform[2]);
-  glVertexAttribPointer(attribute_instance_transform[2], sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(mat4), (void *)(sizeof(vec4)*2));
-  glEnableVertexAttribArray(attribute_instance_transform[3]);
-  glVertexAttribPointer(attribute_instance_transform[3], sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(mat4), (void *)(sizeof(vec4)*3));
+  GLuint attribute_block_instance_transform = 4;
+  int transform_start = offsetof(Block, transformation_matrix);
 
-  glVertexAttribDivisor(attribute_instance_transform[0], 1);
-  glVertexAttribDivisor(attribute_instance_transform[1], 1);
-  glVertexAttribDivisor(attribute_instance_transform[2], 1);
-  glVertexAttribDivisor(attribute_instance_transform[3], 1);
+  glEnableVertexAttribArray(attribute_block_instance_transform+0);
+  glVertexAttribPointer(attribute_block_instance_transform+0, sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(Block), (void *)(transform_start + sizeof(vec4)*0));
+  glEnableVertexAttribArray(attribute_block_instance_transform+1);
+  glVertexAttribPointer(attribute_block_instance_transform+1, sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(Block), (void *)(transform_start + sizeof(vec4)*1));
+  glEnableVertexAttribArray(attribute_block_instance_transform+2);
+  glVertexAttribPointer(attribute_block_instance_transform+2, sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(Block), (void *)(transform_start + sizeof(vec4)*2));
+  glEnableVertexAttribArray(attribute_block_instance_transform+3);
+  glVertexAttribPointer(attribute_block_instance_transform+3, sizeof(vec4)/sizeof(float), GL_FLOAT, GL_FALSE, sizeof(Block), (void *)(transform_start + sizeof(vec4)*3));
+
+  glVertexAttribDivisor(attribute_block_instance_transform+0, 1);
+  glVertexAttribDivisor(attribute_block_instance_transform+1, 1);
+  glVertexAttribDivisor(attribute_block_instance_transform+2, 1);
+  glVertexAttribDivisor(attribute_block_instance_transform+3, 1);
 }
 
 
 void
-update_instance(GLuint instance_vbo, int instance_n, mat4 *instance)
+update_block_instance(GLuint block_instance_vbo, int block_instance_n, Block *instance)
 {
-  glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
-  glBufferSubData(GL_ARRAY_BUFFER, sizeof(mat4)*instance_n, sizeof(mat4), instance);
+  glBindBuffer(GL_ARRAY_BUFFER, block_instance_vbo);
+  glBufferSubData(GL_ARRAY_BUFFER, sizeof(Block)*block_instance_n, sizeof(Block), instance);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 
@@ -240,6 +245,13 @@ get_uniform_locations(Uniforms *uniforms, GLuint shader_program)
   if (uniforms->uniform_mat4_world_transform == -1)
   {
     printf("Failed to find uniform mat4 world_transform");
+    success &= false;
+  }
+
+  uniforms->uniform_vec3_block_type_colours = glGetUniformLocation(shader_program, "block_type_colours");
+  if (uniforms->uniform_vec3_block_type_colours == -1)
+  {
+    printf("Failed to find uniform vec3 block_type_colours");
     success &= false;
   }
 

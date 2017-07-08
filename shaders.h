@@ -1,16 +1,16 @@
 #ifndef SHADERS_H_DEF
 #define SHADERS_H_DEF
 
-struct ShaderAttributes
+struct Vertex
 {
   vec3 pos;
-  vec3 colour;
 };
 
 
 struct Uniforms
 {
   GLuint uniform_mat4_world_transform;
+  GLuint uniform_vec3_block_type_colours;
 };
 
 #endif

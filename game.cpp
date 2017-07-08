@@ -10,70 +10,76 @@ game(SDL_Window *sdl_window, bool first_frame)
                 instance_vbo;
   static Uniforms uniforms;
 
-  static int n_points,
-             n_indices,
-             n_instances;
-  static mat4 instances[] = {
-    {0.1, 0, 0, 0,
-     0, 1,   0, 0,
-     0, 0, 0.1, 0,
-     0, 0,   0, 1},
-    {1, 0,   0, 0,
-     0, 0.1, 0, 0,
-     0, 0,   1, 0,
-     0, 0,   0, 1},
-    {0.2, 0, 0, 0,
-     0, 0.2, 0, 0,
-     0, 0, 0.2, 0,
-     0, 0,   0, 1}
+  static Block block_instances[] = {
+    {{1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1}, BLOCK_STONE},
+    {{1, 0, 0, 2,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1}, BLOCK_DIRT},
+    {{1, 0, 0, 0,
+      0, 1, 0, 2,
+      0, 0, 1, 0,
+      0, 0, 0, 1}, BLOCK_GRASS},
+    {{1, 0, 0, 2,
+      0, 1, 0, 2,
+      0, 0, 1, 0,
+      0, 0, 0, 1}, BLOCK_GRASS},
+    {{1, 0, 0, 2,
+      0, 1, 0, 0,
+      0, 0, 1, -2,
+      0, 0, 0, 1}, BLOCK_GRASS}
   };
+
+  static Vertex cube_vertices[] = {
+    // front
+    {.pos = {-1, -1,  1}},
+    {.pos = { 1, -1,  1}},
+    {.pos = { 1,  1,  1}},
+    {.pos = {-1,  1,  1}},
+    // back
+    {.pos = {-1, -1, -1}},
+    {.pos = { 1, -1, -1}},
+    {.pos = { 1,  1, -1}},
+    {.pos = {-1,  1, -1}},
+  };
+
+  static GLushort cube_indices[] = {
+    // front
+    0, 1, 2,
+    2, 3, 0,
+    // top
+    1, 5, 6,
+    6, 2, 1,
+    // back
+    7, 6, 5,
+    5, 4, 7,
+    // bottom
+    4, 0, 3,
+    3, 7, 4,
+    // left
+    4, 5, 1,
+    1, 0, 4,
+    // right
+    3, 2, 6,
+    6, 7, 3,
+  };
+
+  static int n_block_instances = sizeof(block_instances) / sizeof(Block);
+  static int n_cube_vertices = sizeof(cube_vertices) / sizeof(Vertex);
+  static int n_cube_indices = sizeof(cube_indices) / sizeof(GLushort);
+
 
   bool keep_running = true;
 
   if (first_frame)
   {
-    ShaderAttributes points[] = {
-      // front
-      {.pos = {-1, -1,  1}, .colour = {1, 0, 0}},
-      {.pos = { 1, -1,  1}, .colour = {0, 1, 0}},
-      {.pos = { 1,  1,  1}, .colour = {0, 0, 1}},
-      {.pos = {-1,  1,  1}, .colour = {1, 1, 1}},
-      // back
-      {.pos = {-1, -1, -1}, .colour = {1, 0, 0}},
-      {.pos = { 1, -1, -1}, .colour = {0, 1, 0}},
-      {.pos = { 1,  1, -1}, .colour = {0, 0, 1}},
-      {.pos = {-1,  1, -1}, .colour = {1, 1, 1}},
-    };
-    n_points = sizeof(points) / sizeof(ShaderAttributes);
-
-    GLushort indices[] = {
-      // front
-      0, 1, 2,
-      2, 3, 0,
-      // top
-      1, 5, 6,
-      6, 2, 1,
-      // back
-      7, 6, 5,
-      5, 4, 7,
-      // bottom
-      4, 0, 3,
-      3, 7, 4,
-      // left
-      4, 5, 1,
-      1, 0, 4,
-      // right
-      3, 2, 6,
-      6, 7, 3,
-    };
-    n_indices = sizeof(indices) / sizeof(GLushort);
-
-    n_instances = sizeof(instances) / sizeof(mat4);
-
     setup_vao(&vao);
-    setup_vertex_vbo_ibo(&vertex_vbo, points, n_points,
-                         &vertex_ibo, indices, n_indices);
-    setup_instances_vbo(&instance_vbo, instances, n_instances);
+    setup_vertex_vbo_ibo(&vertex_vbo, cube_vertices, n_cube_vertices,
+                         &vertex_ibo, cube_indices, n_cube_indices);
+    setup_block_instances_vbo(&instance_vbo, block_instances, n_block_instances);
 
     const int n_shaders = 2;
     const char *filenames[n_shaders] = {"vertex-shader.glvs", "fragment-shader.glfs"};
@@ -96,6 +102,9 @@ game(SDL_Window *sdl_window, bool first_frame)
       return keep_running;
     }
 
+    // Upload the block colours map to the uniform
+    glUniform3fv(uniforms.uniform_vec3_block_type_colours, 3, BLOCK_TYPE_COLOURS[0].elem);
+
     print_gl_errors();
     printf("End of first frame setup.\n");
   }
@@ -105,13 +114,9 @@ game(SDL_Window *sdl_window, bool first_frame)
 
   float seconds = 0.001 * SDL_GetTicks();
 
-  // Update instances
+  // Update block instances
 
-  mat4 new_instance_0 = multiply(instances[0], (mat4){1, 0, 0, 0,
-                                                      0, 1, 0, sin(80 * seconds * M_PI / 180.0),
-                                                      0, 0, 1, 0,
-                                                      0, 0, 0, 1});
-  update_instance(instance_vbo, 0, &new_instance_0);
+
 
   // Update uniforms
 
@@ -120,40 +125,40 @@ game(SDL_Window *sdl_window, bool first_frame)
                           0, 0, 1, 0,
                           0, 0, 0, 1};
 
-  vec3 offset = {0, 0.5 * sin(180 * seconds * M_PI / 180.0), 0};
+  vec3 offset = {0, 0, 0};
   multiply(&world_transform, (mat4){1, 0, 0, offset.x,
                                     0, 1, 0, offset.y,
                                     0, 0, 1, offset.z,
                                     0, 0, 0,        1});
 
-  float scale = 0.3;
+  float scale = 0.1;
   multiply(&world_transform, (mat4){scale,     0,     0, 0,
                                         0, scale,     0, 0,
                                         0,     0, scale, 0,
                                         0,     0,     0, 1});
 
-  float theta_z = 1.0;
+  float theta_z = -45 * M_PI / 180;
   float theta_y = 45 * seconds * M_PI / 180;
-  float theta_x = 30 * seconds * M_PI / 180;
-
-  multiply(&world_transform, (mat4){cos(theta_x), -sin(theta_x), 0, 0,
-                                    sin(theta_x),  cos(theta_x), 0, 0,
-                                               0,             0, 1, 0,
-                                               0,             0, 0, 1});
-
-  multiply(&world_transform, (mat4){ cos(theta_y), 0, sin(theta_y), 0,
-                                                0, 1,            0, 0,
-                                    -sin(theta_y), 0, cos(theta_y), 0,
-                                                0, 0,            0, 1});
+  float theta_x = 0;
 
   multiply(&world_transform, (mat4){1,            0,             0, 0,
                                     0, cos(theta_z), -sin(theta_z), 0,
                                     0, sin(theta_z),  cos(theta_z), 0,
                                     0,            0,             0, 1});
 
+  multiply(&world_transform, (mat4){ cos(theta_y), 0, sin(theta_y), 0,
+                                                0, 1,            0, 0,
+                                    -sin(theta_y), 0, cos(theta_y), 0,
+                                                0, 0,            0, 1});
+
+  multiply(&world_transform, (mat4){cos(theta_x), -sin(theta_x), 0, 0,
+                                    sin(theta_x),  cos(theta_x), 0, 0,
+                                               0,             0, 1, 0,
+                                               0,             0, 0, 1});
+
   glUniformMatrix4fv(uniforms.uniform_mat4_world_transform, 1, true, world_transform.es);
 
-  glDrawElementsInstanced(GL_TRIANGLES, n_indices, GL_UNSIGNED_SHORT, 0, n_instances);
+  glDrawElementsInstanced(GL_TRIANGLES, n_cube_indices, GL_UNSIGNED_SHORT, 0, n_block_instances);
 
   SDL_GL_SwapWindow(sdl_window);
   print_gl_errors();
