@@ -86,3 +86,33 @@ open_file(const char *filename, File *result, bool write = false, int trunc_to =
 
   return success;
 }
+
+
+bool
+close_file(File *file, int trunc_to = -1)
+{
+  bool error = false;
+
+  if (munmap((void *)file->text, file->size) != 0)
+  {
+    printf("Error unmapping file.\n");
+    error = true;
+  }
+
+  if (trunc_to >= 0)
+  {
+    file->size = trunc_to;
+    if (ftruncate(file->fd, file->size) == -1)
+    {
+      printf("Failed to truncate file for saving.\n");
+    }
+  }
+
+  if (close(file->fd) != 0)
+  {
+    printf("Error while closing file descriptor.\n");
+    error = true;
+  }
+
+  return error;
+}
