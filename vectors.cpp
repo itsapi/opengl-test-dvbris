@@ -159,21 +159,21 @@ transform(mat4 M, vec4 *V)
 void
 print_vec(vec2 v)
 {
-  printf("[ %.4f, %.4f ]\n", v.x, v.y);
+  printf("[ %7.3f, %7.3f ]\n", v.x, v.y);
 }
 
 
 void
 print_vec(vec3 v)
 {
-  printf("[ %.4f, %.4f, %.4f ]\n", v.x, v.y, v.z);
+  printf("[ %7.3f, %7.3f, %7.3f ]\n", v.x, v.y, v.z);
 }
 
 
 void
 print_vec(vec4 v)
 {
-  printf("[ %.4f, %.4f, %.4f, %.4f ]\n", v.x, v.y, v.z, v.w);
+  printf("[ %7.3f, %7.3f, %7.3f, %7.3f ]\n", v.x, v.y, v.z, v.w);
 }
 
 
